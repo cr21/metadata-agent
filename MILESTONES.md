@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M3** — BigQuery crawler + MCP tools
+> **M4** — Git crawler + file classifier
 
 ---
 
@@ -82,7 +82,7 @@
 
 ## M4 — Git crawler + file classifier
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"We can pull a repo and correctly identify SQL files, stored procedures, Airflow DAGs, and PySpark scripts — each gets the right downstream treatment."*
