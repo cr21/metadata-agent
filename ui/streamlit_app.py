@@ -62,6 +62,7 @@ if page == "Dashboard":
     else:
         assets = assets_data or []
         total = len(assets)
+
         bq_tables = sum(1 for a in assets if a.get("kind") == "bq_table")
         bq_views = sum(1 for a in assets if a.get("kind") == "bq_view")
         bq_routines = sum(1 for a in assets if a.get("kind") == "bq_routine")
@@ -72,8 +73,26 @@ if page == "Dashboard":
         col3.metric("BQ Views", bq_views)
         col4.metric("BQ Routines", bq_routines)
 
+        # Git asset stats (M4)
+        sql_files = sum(1 for a in assets if a.get("kind") == "sql_file")
+        git_routines = sum(1 for a in assets if a.get("kind") == "bq_routine" and a.get("source") == "git")
+        airflow_dags = sum(1 for a in assets if a.get("kind") == "airflow_dag")
+        pyspark_files = sum(1 for a in assets if a.get("kind") == "pyspark_file")
+        pandas_files = sum(1 for a in assets if a.get("kind") == "pandas_file")
+        git_total = sum(1 for a in assets if a.get("source") == "git")
+
+        if git_total > 0:
+            st.divider()
+            st.subheader("Demo Repo Crawled — File Kinds")
+            gc1, gc2, gc3, gc4, gc5 = st.columns(5)
+            gc1.metric("SQL Files", sql_files)
+            gc2.metric("Git Routines (SP)", git_routines)
+            gc3.metric("Airflow DAGs", airflow_dags)
+            gc4.metric("PySpark Files", pyspark_files)
+            gc5.metric("Pandas Files", pandas_files)
+
         if total == 0:
-            st.info("No assets yet. Go to **Crawl** to index your first BigQuery project.")
+            st.info("No assets yet. Go to **Crawl** to index your first source.")
 
     # Milestone progress
     if milestones_data:
@@ -93,45 +112,92 @@ if page == "Dashboard":
                     st.markdown(f"  {chk} {item['text']}")
 
 elif page == "Crawl":
-    st.title("🕷️ Crawl BigQuery")
+    st.title("🕷️ Crawl")
 
-    with st.form("crawl_form"):
-        project_id = st.text_input(
-            "GCP Project ID",
-            placeholder="project-5c016d48-80d5-4534-b69",
-        )
-        dataset_filter_raw = st.text_input(
-            "Dataset filter (optional — comma-separated)",
-            placeholder="dataset1, dataset2",
-        )
-        submitted = st.form_submit_button("Start Crawl")
+    crawl_type = st.radio("Crawl source", ["BigQuery", "Git repository"], horizontal=True)
 
-    if submitted:
-        if not project_id.strip():
-            st.error("Project ID is required.")
-        else:
-            dataset_filter = (
-                [d.strip() for d in dataset_filter_raw.split(",") if d.strip()]
-                if dataset_filter_raw.strip()
-                else None
+    if crawl_type == "BigQuery":
+        with st.form("crawl_bq_form"):
+            project_id = st.text_input(
+                "GCP Project ID",
+                placeholder="my-gcp-project",
             )
-            payload: dict = {"bigquery": {"project_id": project_id.strip()}}
-            if dataset_filter:
-                payload["bigquery"]["dataset_filter"] = dataset_filter
+            dataset_filter_raw = st.text_input(
+                "Dataset filter (optional — comma-separated)",
+                placeholder="dataset1, dataset2",
+            )
+            submitted = st.form_submit_button("Start BigQuery Crawl")
 
-            with st.spinner("Crawling... (this may take a minute)"):
-                result, err = _api("/api/crawl", method="POST", json=payload)
-
-            if err:
-                st.error(f"Crawl failed: {err}")
+        if submitted:
+            if not project_id.strip():
+                st.error("Project ID is required.")
             else:
-                st.success(f"Crawl completed — run ID: `{result['run_id']}`")
-                stats = result.get("stats", {})
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Inserted", stats.get("inserted", 0))
-                c2.metric("Updated", stats.get("updated", 0))
-                c3.metric("Skipped", stats.get("skipped", 0))
-                st.caption(f"Datasets crawled: {', '.join(result.get('datasets_crawled', []))}")
+                dataset_filter = (
+                    [d.strip() for d in dataset_filter_raw.split(",") if d.strip()]
+                    if dataset_filter_raw.strip()
+                    else None
+                )
+                payload: dict = {"bigquery": {"project_id": project_id.strip()}}
+                if dataset_filter:
+                    payload["bigquery"]["dataset_filter"] = dataset_filter
+
+                with st.spinner("Crawling BigQuery... (this may take a minute)"):
+                    result, err = _api("/api/crawl", method="POST", json=payload)
+
+                if err:
+                    st.error(f"Crawl failed: {err}")
+                else:
+                    st.success(f"Crawl completed — run ID: `{result['run_id']}`")
+                    stats = result.get("stats", {})
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Inserted", stats.get("inserted", 0))
+                    c2.metric("Updated", stats.get("updated", 0))
+                    c3.metric("Skipped", stats.get("skipped", 0))
+                    st.caption(f"Datasets crawled: {', '.join(result.get('datasets_crawled', []))}")
+
+    else:  # Git repository
+        with st.form("crawl_git_form"):
+            repo_url = st.text_input(
+                "Repository URL",
+                value="https://github.com/cr21/agentic-test-data",
+            )
+            branch = st.text_input("Branch", value="main")
+            path_prefix = st.text_input(
+                "Path prefix (optional — only crawl files under this path)",
+                placeholder="dags/",
+            )
+            submitted_git = st.form_submit_button("Start Git Crawl")
+
+        if submitted_git:
+            if not repo_url.strip():
+                st.error("Repository URL is required.")
+            else:
+                payload_git: dict = {
+                    "git": {
+                        "repo_url": repo_url.strip(),
+                        "branch": branch.strip() or "main",
+                    }
+                }
+                if path_prefix.strip():
+                    payload_git["git"]["path_prefix"] = path_prefix.strip()
+
+                with st.spinner("Cloning / pulling repo and classifying files..."):
+                    result, err = _api("/api/crawl", method="POST", json=payload_git)
+
+                if err:
+                    st.error(f"Git crawl failed: {err}")
+                else:
+                    st.success(f"Git crawl completed — run ID: `{result['run_id']}`")
+                    stats = result.get("stats", {})
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Inserted", stats.get("inserted", 0))
+                    c2.metric("Updated", stats.get("updated", 0))
+                    c3.metric("Skipped", stats.get("skipped", 0))
+
+                    kind_counts = result.get("kind_counts") or {}
+                    if kind_counts:
+                        st.subheader("Files by kind")
+                        st.json(kind_counts)
 
     # Crawl run history
     st.divider()

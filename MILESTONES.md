@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M3** — BigQuery crawler + MCP tools
+> **M4** — Git crawler + file classifier
 
 ---
 
@@ -82,9 +82,9 @@
 
 ## M4 — Git crawler + file classifier
 
-- **Status**: ⬜ pending
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: 9c18c6f
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"We can pull a repo and correctly identify SQL files, stored procedures, Airflow DAGs, and PySpark scripts — each gets the right downstream treatment."*
 
 **Scope**: clone/pull repo at given branch, walk files, classify, store with content hash. Skip unchanged. Test against `https://github.com/cr21/agentic-test-data` (branch `main`).
@@ -98,10 +98,10 @@
 - else → `unknown`
 
 **Acceptance**:
-- [ ] Unit test for each classifier rule
-- [ ] Integration test against `cr21/agentic-test-data` produces expected kind breakdown (lock counts after first run)
-- [ ] Re-crawling same branch with no changes produces zero updates
-- [ ] Progress page shows "Demo repo crawled" stats per kind
+- [x] Unit test for each classifier rule
+- [x] Integration test against `cr21/agentic-test-data` produces expected kind breakdown (lock counts after first run)
+- [x] Re-crawling same branch with no changes produces zero updates
+- [x] Progress page shows "Demo repo crawled" stats per kind
 
 **Preview**: crawl fixture repo; verify `assets` rows; screenshot Progress page
 
