@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M6** — Edge explosion + depth-2 resolver
+> **M7** — Async job queue
 
 ---
 
@@ -133,19 +133,19 @@
 
 ## M6 — Edge explosion + depth-2 resolver
 
-- **Status**: ⬜ pending
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: 9b9f53c
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"If table B comes from A, which comes from C, we surface C as B's real source — even when the pipeline spans multiple files."*
 
 **Scope**: flatten `lineage_results.payload` into `lineage_edges` (depth 1), compute depth-2 edges with cycle detection.
 
 **Acceptance**:
-- [ ] Unit test: simple A→B
-- [ ] Unit test: chain C→A→B produces depth-2 row C→B
-- [ ] Unit test: diamond shape resolves correctly
-- [ ] Unit test: cycle does not loop forever
-- [ ] Runs in O(edges) per asset
+- [x] Unit test: simple A→B
+- [x] Unit test: chain C→A→B produces depth-2 row C→B
+- [x] Unit test: diamond shape resolves correctly
+- [x] Unit test: cycle does not loop forever
+- [x] Runs in O(edges) per asset
 
 **Preview**: query `lineage_edges` for a chained fixture; verify depth-2 rows
 

@@ -7,6 +7,7 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+from app.lineage.resolver import resolve_depth2
 from app.llm.client import LLMClient
 from app.llm.schemas import KIND_TO_SCHEMA_KIND
 from app.storage import local_cache
@@ -70,9 +71,18 @@ def extract_lineage(
     local_cache.upsert_lineage_result(result_row, db_path=db_path)
 
     edge_count = _explode_edges(asset_id, schema_kind, payload, db_path)
+    depth2_count = resolve_depth2(db_path=db_path)
 
-    logger.info("Stored result %s with %d edges for asset %s", result_id, edge_count, asset_id)
-    return {"result_id": result_id, "schema_kind": schema_kind, "edge_count": edge_count}
+    logger.info(
+        "Stored result %s with %d depth-1 + %d depth-2 edges for asset %s",
+        result_id, edge_count, depth2_count, asset_id,
+    )
+    return {
+        "result_id": result_id,
+        "schema_kind": schema_kind,
+        "edge_count": edge_count,
+        "depth2_count": depth2_count,
+    }
 
 
 # ---------------------------------------------------------------------------
