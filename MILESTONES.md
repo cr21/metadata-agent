@@ -11,13 +11,13 @@
 
 ## Active milestone
 
-> **None yet.** Next up: **M1**.
+> **M1** — Project skeleton + Progress page scaffold
 
 ---
 
 ## M1 — Project skeleton + Progress page scaffold
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"The app boots, the demo page is wired up, and we have a place to track everything from here."*
