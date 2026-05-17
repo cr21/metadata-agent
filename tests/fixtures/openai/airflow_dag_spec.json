@@ -1,0 +1,22 @@
+{
+  "dag_id": "hello_world_week1",
+  "description": "Hello World DAG for Week 1 — verifies Airflow connectivity and checks service health",
+  "tasks": [
+    {
+      "task_id": "hello_world",
+      "operator": "PythonOperator",
+      "reads_hint": [],
+      "writes_hint": [],
+      "dependencies": [],
+      "description": "Prints a hello-world message to verify the Airflow worker is operational"
+    },
+    {
+      "task_id": "check_services",
+      "operator": "PythonOperator",
+      "reads_hint": ["http://rag-api:8000/api/v1/health", "postgres.rag_db"],
+      "writes_hint": [],
+      "dependencies": ["hello_world"],
+      "description": "Checks API health endpoint and PostgreSQL database connectivity"
+    }
+  ]
+}
