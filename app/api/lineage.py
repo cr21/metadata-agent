@@ -46,6 +46,12 @@ async def get_lineage_results(asset_id: str) -> list[dict]:
     return local_cache.list_lineage_results(asset_id)
 
 
+@router.get("/edges")
+async def list_all_edges(depth: int | None = None) -> list[dict]:
+    """List all lineage edges, optionally filtered by depth (1 or 2)."""
+    return local_cache.list_lineage_edges(depth=depth)
+
+
 @router.get("/edges/{asset_id}")
 async def get_lineage_edges(asset_id: str, depth: int | None = None) -> list[dict]:
     """List lineage edges for an asset, optionally filtered by depth."""

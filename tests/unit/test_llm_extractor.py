@@ -154,7 +154,7 @@ class TestExtractorSQL:
 
         extract_lineage(asset_id, llm_client=_mock_client(fixture_payload), db_path=db_path)
 
-        edges = local_cache.list_lineage_edges(source_asset_id=asset_id, db_path=db_path)
+        edges = local_cache.list_lineage_edges(source_asset_id=asset_id, depth=1, db_path=db_path)
         assert len(edges) > 0
         for e in edges:
             assert e["depth"] == 1
@@ -174,10 +174,10 @@ class TestExtractorSQL:
         # Re-extract with same fixture
         extract_lineage(asset_id, llm_client=_mock_client(fixture_payload), db_path=db_path)
 
-        # lineage_results gets a new row each time (new result_id), but edges are idempotent
-        edges_after_second = local_cache.list_lineage_edges(source_asset_id=asset_id, db_path=db_path)
+        # lineage_results gets a new row each time (new result_id), but depth-1 edges are idempotent
+        edges_after_second = local_cache.list_lineage_edges(source_asset_id=asset_id, depth=1, db_path=db_path)
         edges_count = r1["edge_count"]
-        # Each edge_id is deterministic — second run should produce no new edges
+        # Each edge_id is deterministic — second run should produce no new depth-1 edges
         assert len(edges_after_second) == edges_count
 
 
