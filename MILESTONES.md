@@ -11,25 +11,25 @@
 
 ## Active milestone
 
-> **M1** — Project skeleton + Progress page scaffold
+> **M2** — Storage layer (BigQuery + SQLite)
 
 ---
 
 ## M1 — Project skeleton + Progress page scaffold
 
-- **Status**: 🟡 in_progress
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: df25e80
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"The app boots, the demo page is wired up, and we have a place to track everything from here."*
 
-**Scope**: repo layout, `pyproject.toml`, `.env.example`, `config.py`, logging, empty FastAPI app, Streamlit app with the Progress page wired up, `pytest`, `ruff`. Progress page reads `MILESTONES.md` and renders all 9 rows.
+**Scope**: repo layout, `pyproject.toml`, `.env.example`, `config.py`, logging, empty FastAPI app, Streamlit app with Dashboard/Crawl/Assets/Preview pages, `pytest`, `ruff`, `Makefile`.
 
 **Acceptance**:
-- [ ] `uvicorn app.main:app` returns 200 on `/health`
-- [ ] `GET /api/milestones` returns parsed contents of `MILESTONES.md`
-- [ ] `streamlit run ui/streamlit_app.py` opens on Progress page showing all 9 milestones
-- [ ] `pytest` green
-- [ ] `ruff check` clean
+- [x] `uvicorn app.main:app` returns 200 on `/health`
+- [x] `streamlit run ui/streamlit_app.py` opens on Dashboard page with 4-page sidebar
+- [x] `pytest` green
+- [x] `ruff check` clean
+- [x] `Makefile` shortcuts wired (`make api`, `make ui`, `make dev`, `make test`, `make lint`)
 
 **Preview**: `curl localhost:8000/health` · `curl localhost:8000/api/milestones` · open Streamlit, screenshot for manager
 
