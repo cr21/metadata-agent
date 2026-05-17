@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M7** — Async job queue
+> **M7** — Async job queue 🟡
 
 ---
 
@@ -155,7 +155,7 @@
 
 ## M7 — Async job queue
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"Crawls return instantly, lineage runs in the background, and users can re-trigger any asset on demand without waiting on others."*
