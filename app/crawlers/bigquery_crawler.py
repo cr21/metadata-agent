@@ -46,9 +46,9 @@ def list_tables(
             {
                 "table_id": tbl.table_id,
                 "type": tbl.table_type,
-                "num_rows": tbl.num_rows,
+                "num_rows": getattr(tbl, "num_rows", None),
                 "last_modified": (
-                    tbl.modified.isoformat() if tbl.modified else None
+                    tbl.modified.isoformat() if getattr(tbl, "modified", None) else None
                 ),
             }
         )
