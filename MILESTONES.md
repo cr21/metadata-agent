@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M6** — Edge explosion + depth-2 resolver
+> **M6** — Edge explosion + depth-2 resolver 🟡
 
 ---
 
@@ -133,7 +133,7 @@
 
 ## M6 — Edge explosion + depth-2 resolver
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"If table B comes from A, which comes from C, we surface C as B's real source — even when the pipeline spans multiple files."*
