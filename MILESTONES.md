@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M7** — Async job queue 🟡
+> **M7** — Async job queue ✅
 
 ---
 
@@ -155,21 +155,21 @@
 
 ## M7 — Async job queue
 
-- **Status**: 🟡 in_progress
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: 9b351fb
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"Crawls return instantly, lineage runs in the background, and users can re-trigger any asset on demand without waiting on others."*
 
 **Scope**: in-process asyncio queue, semaphore-bounded workers, job lifecycle in `lineage_jobs`, auto-enqueue after crawl, on-demand endpoint.
 
 **Acceptance**:
-- [ ] `POST /api/crawl` returns immediately with run_id; jobs enqueued for changed assets
-- [ ] `POST /api/lineage/refresh/{asset_id}` enqueues fresh job
-- [ ] `GET /api/lineage/jobs?status=...` lists jobs
-- [ ] Staleness: skip if `input_hash == content_hash` and non-failed result exists
-- [ ] Test: concurrency limit honored
-- [ ] Test: staleness skip works
-- [ ] Test: on-demand always runs (bypasses staleness)
+- [x] `POST /api/crawl` returns immediately with run_id; jobs enqueued for changed assets
+- [x] `POST /api/lineage/refresh/{asset_id}` enqueues fresh job
+- [x] `GET /api/lineage/jobs?status=...` lists jobs
+- [x] Staleness: skip if `input_hash == content_hash` and non-failed result exists
+- [x] Test: concurrency limit honored
+- [x] Test: staleness skip works
+- [x] Test: on-demand always runs (bypasses staleness)
 
 **Preview**: crawl; watch jobs progress via jobs endpoint
 
