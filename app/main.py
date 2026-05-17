@@ -1,4 +1,5 @@
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -9,7 +10,17 @@ from app.config import configure_logging, get_settings
 
 configure_logging()
 
-app = FastAPI(title="Metadata Generator Agent", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app import queue as job_queue
+    settings = get_settings()
+    job_queue.startup(concurrency=settings.llm_concurrency, num_workers=settings.llm_concurrency)
+    yield
+    job_queue.shutdown()
+
+
+app = FastAPI(title="Metadata Generator Agent", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
