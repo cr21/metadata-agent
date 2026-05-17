@@ -1,0 +1,118 @@
+{
+  "stm_entries": [
+    {
+      "target_table": "stg_customer_orders",
+      "columns": [
+        {
+          "column": "order_id",
+          "datatype": "INTEGER",
+          "source_columns": [{"table": "external_orders", "column": "order_id"}],
+          "transformation": "Direct copy from external_orders",
+          "transformation_type": "direct",
+          "is_pii": false
+        },
+        {
+          "column": "customer_id",
+          "datatype": "INTEGER",
+          "source_columns": [{"table": "external_orders", "column": "customer_id"}],
+          "transformation": "Direct copy from external_orders",
+          "transformation_type": "direct",
+          "is_pii": true
+        },
+        {
+          "column": "order_amount",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "external_orders", "column": "order_amount"}],
+          "transformation": "Direct copy from external_orders",
+          "transformation_type": "direct",
+          "is_pii": false
+        },
+        {
+          "column": "order_date",
+          "datatype": "DATE",
+          "source_columns": [{"table": "external_orders", "column": "order_date"}],
+          "transformation": "Direct copy from external_orders",
+          "transformation_type": "direct",
+          "is_pii": false
+        },
+        {
+          "column": "load_date",
+          "datatype": "DATE",
+          "source_columns": [],
+          "transformation": "Procedure input parameter p_load_date",
+          "transformation_type": "constant",
+          "is_pii": false
+        }
+      ]
+    },
+    {
+      "target_table": "customer_orders",
+      "columns": [
+        {
+          "column": "order_id",
+          "datatype": "INTEGER",
+          "source_columns": [{"table": "stg_customer_orders", "column": "order_id"}],
+          "transformation": "Direct copy from staging",
+          "transformation_type": "direct",
+          "is_pii": false
+        },
+        {
+          "column": "customer_id",
+          "datatype": "INTEGER",
+          "source_columns": [{"table": "stg_customer_orders", "column": "customer_id"}],
+          "transformation": "Direct copy from staging",
+          "transformation_type": "direct",
+          "is_pii": true
+        },
+        {
+          "column": "order_amount",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "stg_customer_orders", "column": "order_amount"}],
+          "transformation": "Direct copy from staging",
+          "transformation_type": "direct",
+          "is_pii": false
+        },
+        {
+          "column": "prev_amount",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "stg_customer_orders", "column": "prev_order_amount"}],
+          "transformation": "LAG(order_amount) OVER (PARTITION BY customer_id ORDER BY order_date)",
+          "transformation_type": "derived",
+          "is_pii": false
+        },
+        {
+          "column": "growth_pct",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "stg_customer_orders", "column": "growth_pct"}],
+          "transformation": "(order_amount - prev_order_amount) / prev_order_amount",
+          "transformation_type": "derived",
+          "is_pii": false
+        },
+        {
+          "column": "rolling_avg",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "stg_customer_orders", "column": "rolling_avg_3"}],
+          "transformation": "AVG(order_amount) OVER 3-row window",
+          "transformation_type": "derived",
+          "is_pii": false
+        },
+        {
+          "column": "total_spend",
+          "datatype": "NUMERIC",
+          "source_columns": [{"table": "stg_customer_orders", "column": "cumulative_spend"}],
+          "transformation": "SUM(order_amount) cumulative per customer",
+          "transformation_type": "derived",
+          "is_pii": false
+        },
+        {
+          "column": "rank_in_customer",
+          "datatype": "INTEGER",
+          "source_columns": [{"table": "stg_customer_orders", "column": "order_rank"}],
+          "transformation": "DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY order_amount DESC)",
+          "transformation_type": "derived",
+          "is_pii": false
+        }
+      ]
+    }
+  ]
+}

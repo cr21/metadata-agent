@@ -1,0 +1,59 @@
+{
+  "stm_entries": [
+    {
+      "target_table": "silver_db.orders_cleaned",
+      "target_location_type": "hive",
+      "write_mode": "overwrite",
+      "columns": [
+        {
+          "column": "order_id",
+          "datatype": "unknown",
+          "source_columns": [{"table": "bronze/orders_raw/", "column": "order_id"}],
+          "transformation": "Direct passthrough after COMPLETED filter",
+          "transformation_type": "direct",
+          "spark_function": "col",
+          "is_pii": false
+        },
+        {
+          "column": "order_status",
+          "datatype": "string",
+          "source_columns": [{"table": "bronze/orders_raw/", "column": "order_status"}],
+          "transformation": "Filtered to COMPLETED only",
+          "transformation_type": "direct",
+          "spark_function": "filter",
+          "is_pii": false
+        },
+        {
+          "column": "price",
+          "datatype": "double",
+          "source_columns": [{"table": "bronze/orders_raw/", "column": "price"}],
+          "transformation": "Used in order_val calculation",
+          "transformation_type": "direct",
+          "spark_function": "col",
+          "is_pii": false
+        },
+        {
+          "column": "quantity",
+          "datatype": "integer",
+          "source_columns": [{"table": "bronze/orders_raw/", "column": "quantity"}],
+          "transformation": "Used in order_val calculation",
+          "transformation_type": "direct",
+          "spark_function": "col",
+          "is_pii": false
+        },
+        {
+          "column": "order_val",
+          "datatype": "double",
+          "source_columns": [
+            {"table": "bronze/orders_raw/", "column": "price"},
+            {"table": "bronze/orders_raw/", "column": "quantity"}
+          ],
+          "transformation": "price * quantity",
+          "transformation_type": "derived",
+          "spark_function": "withColumn",
+          "is_pii": false
+        }
+      ]
+    }
+  ]
+}

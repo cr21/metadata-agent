@@ -44,6 +44,28 @@ CREATE TABLE IF NOT EXISTS lineage_jobs (
     error       TEXT,
     input_hash  TEXT
 );
+
+CREATE TABLE IF NOT EXISTS lineage_results (
+    result_id   TEXT PRIMARY KEY,
+    asset_id    TEXT NOT NULL,
+    job_id      TEXT,
+    schema_kind TEXT NOT NULL,
+    payload     TEXT NOT NULL,
+    created_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS lineage_edges (
+    edge_id             TEXT PRIMARY KEY,
+    source_asset_id     TEXT NOT NULL,
+    target_table        TEXT NOT NULL,
+    target_column       TEXT NOT NULL,
+    source_table        TEXT NOT NULL,
+    source_column       TEXT NOT NULL,
+    transformation_type TEXT,
+    transformation      TEXT,
+    depth               INTEGER NOT NULL DEFAULT 1,
+    created_at          TEXT NOT NULL
+);
 """
 
 
@@ -179,4 +201,85 @@ def list_lineage_jobs(asset_id: str | None = None, db_path: Path = DB_PATH) -> l
             ).fetchall()
         else:
             rows = conn.execute("SELECT * FROM lineage_jobs").fetchall()
+        return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# lineage_results
+# ---------------------------------------------------------------------------
+
+def upsert_lineage_result(result: dict, db_path: Path = DB_PATH) -> None:
+    """Insert lineage result. Idempotent — existing result_id is a no-op."""
+    row = {**result}
+    row.setdefault("created_at", _now())
+    with _connect(db_path) as conn:
+        conn.execute(
+            """INSERT OR IGNORE INTO lineage_results
+               (result_id, asset_id, job_id, schema_kind, payload, created_at)
+               VALUES (:result_id, :asset_id, :job_id, :schema_kind, :payload, :created_at)""",
+            row,
+        )
+
+
+def get_lineage_result(result_id: str, db_path: Path = DB_PATH) -> dict | None:
+    with _connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT * FROM lineage_results WHERE result_id = ?", (result_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def list_lineage_results(asset_id: str | None = None, db_path: Path = DB_PATH) -> list[dict]:
+    with _connect(db_path) as conn:
+        if asset_id:
+            rows = conn.execute(
+                "SELECT * FROM lineage_results WHERE asset_id = ? ORDER BY created_at DESC",
+                (asset_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM lineage_results ORDER BY created_at DESC"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# lineage_edges
+# ---------------------------------------------------------------------------
+
+def upsert_lineage_edge(edge: dict, db_path: Path = DB_PATH) -> None:
+    """Insert a lineage edge. Idempotent — existing edge_id is a no-op."""
+    row = {**edge}
+    row.setdefault("created_at", _now())
+    with _connect(db_path) as conn:
+        conn.execute(
+            """INSERT OR IGNORE INTO lineage_edges
+               (edge_id, source_asset_id, target_table, target_column,
+                source_table, source_column, transformation_type, transformation,
+                depth, created_at)
+               VALUES
+               (:edge_id, :source_asset_id, :target_table, :target_column,
+                :source_table, :source_column, :transformation_type, :transformation,
+                :depth, :created_at)""",
+            row,
+        )
+
+
+def list_lineage_edges(
+    source_asset_id: str | None = None,
+    depth: int | None = None,
+    db_path: Path = DB_PATH,
+) -> list[dict]:
+    with _connect(db_path) as conn:
+        clauses, params = [], []
+        if source_asset_id:
+            clauses.append("source_asset_id = ?")
+            params.append(source_asset_id)
+        if depth is not None:
+            clauses.append("depth = ?")
+            params.append(depth)
+        sql = "SELECT * FROM lineage_edges"
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        rows = conn.execute(sql, params).fetchall()
         return [dict(r) for r in rows]
