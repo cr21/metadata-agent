@@ -1,0 +1,47 @@
+[project]
+name = "metadata-agent"
+version = "0.1.0"
+description = "Metadata generator agent — crawls BigQuery + Git, extracts column-level lineage via LLM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "streamlit>=1.35.0",
+    "openai>=1.40.0",
+    "google-cloud-bigquery>=3.25.0",
+    "gitpython>=3.1.43",
+    "mcp>=1.0.0",
+    "python-dotenv>=1.0.1",
+    "pydantic-settings>=2.3.0",
+    "httpx>=0.27.0",
+    "jsonschema>=4.22.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-httpx>=0.30.0",
+    "vcrpy>=6.0.0",
+    "ruff>=0.5.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "ui", "mcp_server", "scripts"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
