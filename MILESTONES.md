@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M2** — Storage layer (BigQuery + SQLite) 🟡
+> **M3** — BigQuery crawler + MCP tools
 
 ---
 
@@ -39,19 +39,19 @@
 
 ## M2 — Storage layer (BigQuery + SQLite)
 
-- **Status**: 🟡 in_progress
+- **Status**: ✅ done
 - **Commit SHA**: —
-- **Completed**: —
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"We can remember what we've already seen, so re-crawling doesn't redo work."*
 
 **Scope**: SQLite cache schema, BQ tables created via `scripts/init_bq_tables.py`, `bq_store.py` and `local_cache.py` with upsert-by-hash semantics.
 
 **Acceptance**:
-- [ ] Running init script idempotently creates the 5 BQ tables
-- [ ] Unit test: insert new asset
-- [ ] Unit test: update on hash change
-- [ ] Unit test: no-op on hash match
-- [ ] `ruff check` clean
+- [x] Running init script idempotently creates the 5 BQ tables
+- [x] Unit test: insert new asset
+- [x] Unit test: update on hash change
+- [x] Unit test: no-op on hash match
+- [x] `ruff check` clean
 
 **Preview**: run init script · `python -c "from app.storage.local_cache import list_assets; print(list_assets())"`
 
