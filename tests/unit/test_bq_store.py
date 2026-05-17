@@ -1,8 +1,12 @@
-"""Unit tests for BigQuery store — uses a mock BQ client, no live API calls."""
+"""Unit tests for BigQuery store — uses a mock BQ client, no live API calls.
+
+All inserts now use DML INSERT (bq.query), not the streaming API (insert_rows_json),
+to avoid the streaming buffer restriction on subsequent UPDATE/DELETE statements.
+"""
 
 from unittest.mock import MagicMock
 
-from app.storage import bq_store  # noqa: E402
+from app.storage import bq_store
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -14,21 +18,22 @@ def _make_client(existing_hash: str | None = None) -> MagicMock:
 
     def _query(sql: str, job_config=None):
         job = MagicMock()
-        # For SELECT queries that check existence, return a row if existing_hash set
         if "SELECT content_hash" in sql:
             job.result.return_value = (
                 [MagicMock(**{"__getitem__": lambda self, k: existing_hash})]
                 if existing_hash
                 else []
             )
-        elif "SELECT run_id" in sql or "SELECT job_id" in sql or "SELECT result_id" in sql or "SELECT edge_id" in sql:
+        elif any(
+            kw in sql
+            for kw in ("SELECT run_id", "SELECT job_id", "SELECT result_id", "SELECT edge_id")
+        ):
             job.result.return_value = []
         else:
             job.result.return_value = []
         return job
 
     client.query.side_effect = _query
-    client.insert_rows_json.return_value = []  # no errors
     return client
 
 
@@ -52,26 +57,28 @@ def _asset(asset_id: str = "a1", content_hash: str = "hash_v1") -> dict:
 # ---------------------------------------------------------------------------
 
 def test_bq_insert_new_asset():
-    """New asset (no existing row) → INSERT → returns 'inserted'."""
+    """New asset (no existing row) → DML INSERT via bq.query → returns 'inserted'."""
     client = _make_client(existing_hash=None)
     result = bq_store.upsert_asset(_asset(), client=client)
     assert result == "inserted"
-    client.insert_rows_json.assert_called_once()
+    # Must have made at least 2 query calls: one SELECT check + one DML INSERT
+    assert client.query.call_count >= 2
+    # Streaming API must NOT be used (streaming buffer blocks subsequent UPDATEs)
+    client.insert_rows_json.assert_not_called()
 
 
 def test_bq_noop_on_hash_match():
-    """Existing asset with same hash → returns 'skipped', no INSERT/UPDATE."""
+    """Existing asset with same hash → returns 'skipped', no write calls."""
     client = _make_client(existing_hash="hash_v1")
     result = bq_store.upsert_asset(_asset(content_hash="hash_v1"), client=client)
     assert result == "skipped"
     client.insert_rows_json.assert_not_called()
+    # Only the SELECT check should have run
+    assert client.query.call_count == 1
 
 
 def test_bq_update_on_hash_change():
-    """Existing asset with different hash → UPDATE → returns 'updated'."""
-    client = _make_client(existing_hash="hash_v1")
-
-    # The query mock needs to know: first call checks hash, second call is UPDATE
+    """Existing asset with different hash → DML UPDATE → returns 'updated'."""
     call_count = 0
 
     def _query(sql: str, job_config=None):
@@ -86,6 +93,7 @@ def test_bq_update_on_hash_change():
             job.result.return_value = []
         return job
 
+    client = MagicMock()
     client.query.side_effect = _query
     result = bq_store.upsert_asset(_asset(content_hash="hash_v2"), client=client)
     assert result == "updated"
@@ -97,6 +105,7 @@ def test_bq_update_on_hash_change():
 # ---------------------------------------------------------------------------
 
 def test_bq_upsert_crawl_run_inserts_new():
+    """New crawl_run → DML INSERT via bq.query (not streaming)."""
     client = _make_client()
     run = {
         "run_id": "r1", "started_at": "2026-01-01T00:00:00+00:00",
@@ -104,7 +113,8 @@ def test_bq_upsert_crawl_run_inserts_new():
         "status": "running", "error": None,
     }
     bq_store.upsert_crawl_run(run, client=client)
-    client.insert_rows_json.assert_called_once()
+    assert client.query.call_count >= 2  # SELECT check + DML INSERT
+    client.insert_rows_json.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +122,7 @@ def test_bq_upsert_crawl_run_inserts_new():
 # ---------------------------------------------------------------------------
 
 def test_bq_upsert_lineage_job_inserts_new():
+    """New lineage_job → DML INSERT via bq.query (not streaming)."""
     client = _make_client()
     job = {
         "job_id": "j1", "asset_id": "a1", "status": "queued",
@@ -119,7 +130,8 @@ def test_bq_upsert_lineage_job_inserts_new():
         "started_at": None, "finished_at": None, "error": None, "input_hash": "h1",
     }
     bq_store.upsert_lineage_job(job, client=client)
-    client.insert_rows_json.assert_called_once()
+    assert client.query.call_count >= 2
+    client.insert_rows_json.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -127,16 +139,19 @@ def test_bq_upsert_lineage_job_inserts_new():
 # ---------------------------------------------------------------------------
 
 def test_bq_upsert_lineage_result_inserts_new():
+    """New lineage_result → DML INSERT via bq.query (not streaming)."""
     client = _make_client()
     result = {
         "result_id": "res1", "asset_id": "a1", "job_id": "j1",
         "schema_kind": "stm", "payload": "{}",
     }
     bq_store.upsert_lineage_result(result, client=client)
-    client.insert_rows_json.assert_called_once()
+    assert client.query.call_count >= 2
+    client.insert_rows_json.assert_not_called()
 
 
 def test_bq_upsert_lineage_edge_inserts_new():
+    """New lineage_edge → DML INSERT via bq.query (not streaming)."""
     client = _make_client()
     edge = {
         "edge_id": "e1", "source_asset_id": "a1",
@@ -146,4 +161,5 @@ def test_bq_upsert_lineage_edge_inserts_new():
         "depth": 1,
     }
     bq_store.upsert_lineage_edge(edge, client=client)
-    client.insert_rows_json.assert_called_once()
+    assert client.query.call_count >= 2
+    client.insert_rows_json.assert_not_called()
