@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M2** — Storage layer (BigQuery + SQLite)
+> **M2** — Storage layer (BigQuery + SQLite) 🟡
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## M2 — Storage layer (BigQuery + SQLite)
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"We can remember what we've already seen, so re-crawling doesn't redo work."*
