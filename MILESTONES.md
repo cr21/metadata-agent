@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M5** — LLM client + schemas + extractor (single asset)
+> **M6** — Edge explosion + depth-2 resolver
 
 ---
 
@@ -111,19 +111,19 @@
 
 ## M5 — LLM client + schemas + extractor (single asset)
 
-- **Status**: 🟡 in_progress
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: cb597e3
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"We can ask the LLM to read one file and produce structured lineage that conforms to our schema — every time."*
 
 **Scope**: OpenAI client with structured outputs (`strict: true`), three schemas verbatim in `app/llm/schemas.py`, extractor handling one asset end-to-end.
 
 **Acceptance**:
-- [ ] `POST /api/lineage/extract/{asset_id}` synchronously runs and stores result
-- [ ] Recorded-fixture test: one SQL file produces schema-valid STM
-- [ ] Recorded-fixture test: one Airflow DAG produces schema-valid DAG spec
-- [ ] Recorded-fixture test: one PySpark file produces schema-valid PySpark STM
-- [ ] Schema-validation retry path covered by test (inject bad first response)
+- [x] `POST /api/lineage/extract/{asset_id}` synchronously runs and stores result
+- [x] Recorded-fixture test: one SQL file produces schema-valid STM
+- [x] Recorded-fixture test: one Airflow DAG produces schema-valid DAG spec
+- [x] Recorded-fixture test: one PySpark file produces schema-valid PySpark STM
+- [x] Schema-validation retry path covered by test (inject bad first response)
 
 **Preview**: hit endpoint for 3 fixture assets; inspect `lineage_results`
 
