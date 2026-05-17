@@ -61,18 +61,18 @@
 
 ## M3 — BigQuery crawler + MCP tools
 
-- **Status**: 🟡 in_progress
-- **Commit SHA**: —
-- **Completed**: —
+- **Status**: ✅ done
+- **Commit SHA**: d9d4dda
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"Point the tool at a BigQuery project and it inventories every table, view, and stored procedure — plus other agents can introspect BQ through our MCP server."*
 
 **Scope**: crawl datasets/tables/views/routines for a given project. Implement all 6 MCP tools (spec §8). Wire crawler to use the same internal functions the MCP tools expose.
 
 **Acceptance**:
-- [ ] `POST /api/crawl` with `{"bigquery": {"project_id": "..."}}` populates `assets`
-- [ ] BQ asset hash = sha256 of canonical JSON of `(schema + routine_body + view_query)`
-- [ ] MCP server `tools/list` returns all 6 tools per spec §8
-- [ ] Integration test against mocked BQ client passes
+- [x] `POST /api/crawl` with `{"bigquery": {"project_id": "..."}}` populates `assets`
+- [x] BQ asset hash = sha256 of canonical JSON of `(schema + routine_body + view_query)`
+- [x] MCP server `tools/list` returns all 6 tools per spec §8
+- [x] Integration test against mocked BQ client passes
 
 **Preview**: crawl a real small project; inspect `assets` table; run MCP `tools/list`
 
