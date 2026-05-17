@@ -61,7 +61,7 @@
 
 ## M3 — BigQuery crawler + MCP tools
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"Point the tool at a BigQuery project and it inventories every table, view, and stored procedure — plus other agents can introspect BQ through our MCP server."*
