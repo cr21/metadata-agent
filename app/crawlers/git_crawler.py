@@ -97,6 +97,7 @@ def crawl_repo(
 
     stats: dict[str, int] = {"inserted": 0, "updated": 0, "skipped": 0}
     kind_counts: dict[str, int] = {}
+    changed_asset_ids: list[str] = []
 
     try:
         repo = clone_or_pull(repo_url, branch, local_path)
@@ -155,6 +156,8 @@ def crawl_repo(
 
             stats[outcome] = stats.get(outcome, 0) + 1
             kind_counts[kind] = kind_counts.get(kind, 0) + 1
+            if outcome in ("inserted", "updated"):
+                changed_asset_ids.append(asset_id)
             logger.debug("git asset %s → %s (%s)", rel_str, outcome, kind)
 
         finished_at = datetime.now(UTC).isoformat()
@@ -177,6 +180,7 @@ def crawl_repo(
             "branch": branch,
             "stats": stats,
             "kind_counts": kind_counts,
+            "changed_asset_ids": changed_asset_ids,
         }
 
     except Exception as exc:

@@ -173,9 +173,13 @@ def _crawl_dataset(
     project_id: str,
     dataset_id: str,
     client: bigquery.Client,
-) -> dict[str, int]:
-    """Crawl all tables/views/routines in one dataset. Returns per-operation counts."""
+) -> tuple[dict[str, int], list[str]]:
+    """Crawl all tables/views/routines in one dataset.
+
+    Returns (stats, changed_asset_ids).
+    """
     stats: dict[str, int] = {"inserted": 0, "updated": 0, "skipped": 0}
+    changed_asset_ids: list[str] = []
     now = datetime.now(UTC).isoformat()
 
     # Tables and views
@@ -193,9 +197,10 @@ def _crawl_dataset(
             content_hash = _compute_asset_hash(schema, None, view_query)
             kind = "bq_view" if table_type in ("VIEW", "MATERIALIZED_VIEW") else "bq_table"
             identifier = f"{project_id}.{dataset_id}.{table_id}"
+            asset_id = str(uuid.uuid5(uuid.NAMESPACE_URL, identifier))
 
             asset = {
-                "asset_id": str(uuid.uuid5(uuid.NAMESPACE_URL, identifier)),
+                "asset_id": asset_id,
                 "source": "bigquery",
                 "kind": kind,
                 "identifier": identifier,
@@ -212,6 +217,8 @@ def _crawl_dataset(
             result_bq = bq_store.upsert_asset(asset, client=client)
             local_cache.upsert_asset(asset)
             stats[result_bq] = stats.get(result_bq, 0) + 1
+            if result_bq in ("inserted", "updated"):
+                changed_asset_ids.append(asset_id)
             logger.debug("Asset %s → %s", identifier, result_bq)
 
     # Routines (stored procedures / UDFs)
@@ -221,9 +228,10 @@ def _crawl_dataset(
         body = get_routine_definition(project_id, dataset_id, routine_id, client=client)
         content_hash = _compute_asset_hash(None, body, None)
         identifier = f"{project_id}.{dataset_id}.{routine_id}"
+        asset_id = str(uuid.uuid5(uuid.NAMESPACE_URL, identifier))
 
         asset = {
-            "asset_id": str(uuid.uuid5(uuid.NAMESPACE_URL, identifier)),
+            "asset_id": asset_id,
             "source": "bigquery",
             "kind": "bq_routine",
             "identifier": identifier,
@@ -240,9 +248,11 @@ def _crawl_dataset(
         result_bq = bq_store.upsert_asset(asset, client=client)
         local_cache.upsert_asset(asset)
         stats[result_bq] = stats.get(result_bq, 0) + 1
+        if result_bq in ("inserted", "updated"):
+            changed_asset_ids.append(asset_id)
         logger.debug("Routine %s → %s", identifier, result_bq)
 
-    return stats
+    return stats, changed_asset_ids
 
 
 # ---------------------------------------------------------------------------
@@ -287,6 +297,7 @@ def crawl_project(
 
     totals: dict[str, int] = {"inserted": 0, "updated": 0, "skipped": 0}
     datasets_crawled: list[str] = []
+    all_changed: list[str] = []
 
     try:
         all_datasets = list_datasets(project_id, client=introspect)
@@ -301,9 +312,10 @@ def crawl_project(
 
         for ds_id in target_datasets:
             logger.info("Crawling dataset %s.%s", project_id, ds_id)
-            ds_stats = _crawl_dataset(project_id, ds_id, client=introspect)
+            ds_stats, changed = _crawl_dataset(project_id, ds_id, client=introspect)
             for k, v in ds_stats.items():
                 totals[k] = totals.get(k, 0) + v
+            all_changed.extend(changed)
             datasets_crawled.append(ds_id)
 
         finished_at = datetime.now(UTC).isoformat()
@@ -323,6 +335,7 @@ def crawl_project(
             "status": "succeeded",
             "datasets_crawled": datasets_crawled,
             "stats": totals,
+            "changed_asset_ids": all_changed,
         }
 
     except Exception as exc:

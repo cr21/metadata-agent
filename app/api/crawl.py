@@ -38,13 +38,27 @@ class CrawlResponse(BaseModel):
     repo_url: str | None = None
     branch: str | None = None
     kind_counts: dict[str, int] | None = None
+    jobs_enqueued: int = 0
+
+
+async def _enqueue_changed_assets(changed_asset_ids: list[str]) -> int:
+    """Enqueue lineage jobs for each changed/new asset. Returns count enqueued."""
+    from app import queue as job_queue
+    count = 0
+    for asset_id in changed_asset_ids:
+        try:
+            await job_queue.enqueue_job(asset_id, force=False)
+            count += 1
+        except Exception:
+            logger.exception("Failed to enqueue job for asset %s", asset_id)
+    return count
 
 
 @router.post("", response_model=CrawlResponse)
 async def start_crawl(request: CrawlRequest) -> CrawlResponse:
     """
-    Kick off a synchronous crawl (BigQuery, Git, or both).
-    Returns once the crawl completes. (Async queuing added in M7.)
+    Kick off a crawl (BigQuery, Git, or both). Returns immediately with run_id.
+    Lineage extraction jobs are enqueued in the background for changed assets.
     """
     if request.bigquery is None and request.git is None:
         raise HTTPException(status_code=400, detail="At least one source must be specified.")
@@ -59,7 +73,10 @@ async def start_crawl(request: CrawlRequest) -> CrawlResponse:
         except Exception as exc:
             logger.exception("BQ crawl failed for project %s", spec.project_id)
             raise HTTPException(status_code=500, detail=str(exc)) from exc
-        return CrawlResponse(**result)
+
+        changed = result.get("changed_asset_ids", [])
+        jobs_enqueued = await _enqueue_changed_assets(changed)
+        return CrawlResponse(**{k: v for k, v in result.items() if k != "changed_asset_ids"}, jobs_enqueued=jobs_enqueued)
 
     # Git crawl
     spec_git = request.git
@@ -74,6 +91,9 @@ async def start_crawl(request: CrawlRequest) -> CrawlResponse:
         logger.exception("Git crawl failed for %s@%s", spec_git.repo_url, spec_git.branch)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    changed = result.get("changed_asset_ids", [])
+    jobs_enqueued = await _enqueue_changed_assets(changed)
+
     return CrawlResponse(
         run_id=result["run_id"],
         status=result["status"],
@@ -81,6 +101,7 @@ async def start_crawl(request: CrawlRequest) -> CrawlResponse:
         repo_url=result["repo_url"],
         branch=result["branch"],
         kind_counts=result["kind_counts"],
+        jobs_enqueued=jobs_enqueued,
     )
 
 
