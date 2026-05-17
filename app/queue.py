@@ -64,7 +64,7 @@ async def enqueue_job(
     return job_id
 
 
-async def drain(db_path: Path = local_cache.DB_PATH) -> None:
+async def drain() -> None:
     """Wait until the queue is empty and all jobs have finished."""
     q = get_queue()
     await q.join()

@@ -84,7 +84,7 @@ async def test_stale_job_is_skipped(tmp_path):
 
     q.startup(concurrency=2, num_workers=2)
     job_id = await q.enqueue_job(asset_id, force=False, db_path=db_path)
-    await q.drain(db_path=db_path)
+    await q.drain()
     q.shutdown()
     _reset_queue()
 
@@ -118,7 +118,7 @@ async def test_force_bypasses_stale(tmp_path):
     with patch("app.lineage.extractor.extract_lineage", return_value=fake_result):
         q.startup(concurrency=2, num_workers=2)
         job_id = await q.enqueue_job(asset_id, force=True, db_path=db_path)
-        await q.drain(db_path=db_path)
+        await q.drain()
         q.shutdown()
         _reset_queue()
 
@@ -156,7 +156,7 @@ async def test_concurrency_limit_honored(tmp_path):
         q.startup(concurrency=2, num_workers=num_jobs)
         for asset in assets:
             await q.enqueue_job(asset["asset_id"], force=True, db_path=db_path)
-        await q.drain(db_path=db_path)
+        await q.drain()
         q.shutdown()
         _reset_queue()
 
