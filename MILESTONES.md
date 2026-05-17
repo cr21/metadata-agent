@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M4** — Git crawler + file classifier
+> **M5** — LLM client + schemas + extractor (single asset)
 
 ---
 
@@ -111,7 +111,7 @@
 
 ## M5 — LLM client + schemas + extractor (single asset)
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"We can ask the LLM to read one file and produce structured lineage that conforms to our schema — every time."*
