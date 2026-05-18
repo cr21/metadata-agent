@@ -243,8 +243,17 @@ if page == "Dashboard":
         if total == 0:
             st.info("No assets yet. Go to **Crawl** to index your first source.")
 
-    # Lineage job counters
+    # Failed jobs warning banner
     jobs = jobs_data or []
+    failed_jobs = [j for j in jobs if j.get("status") == "failed"]
+    if failed_jobs:
+        st.error(
+            f"⚠️ {len(failed_jobs)} lineage job(s) failed. "
+            "Open the **Preview** page for an asset to see the error details, "
+            "or go to **Crawl → Job Monitor** to view all failures."
+        )
+
+    # Lineage job counters
     if jobs:
         st.divider()
         st.subheader("Lineage Jobs")
