@@ -15,6 +15,47 @@ from app.storage import local_cache
 logger = logging.getLogger(__name__)
 
 
+def _get_bq_content(asset: dict) -> str:
+    """Fetch BQ asset content live from BigQuery and format as SQL text for the LLM."""
+    from app.crawlers import bigquery_crawler as bqc
+
+    identifier = asset["identifier"]  # "project.dataset.resource"
+    parts = identifier.split(".")
+    if len(parts) != 3:
+        raise ValueError(f"Cannot parse BQ identifier '{identifier}': expected project.dataset.resource")
+    project_id, dataset_id, resource_id = parts
+    kind = asset["kind"]
+
+    if kind == "bq_routine":
+        body = bqc.get_routine_definition(project_id, dataset_id, resource_id)
+        if not body:
+            raise ValueError(f"Empty routine body for {identifier}")
+        return body
+
+    if kind == "bq_view":
+        view_query = bqc.get_view_query(project_id, dataset_id, resource_id)
+        schema = bqc.get_table_schema(project_id, dataset_id, resource_id)
+        schema_ddl = ", ".join(
+            f"{c['name']} {c['type']}" for c in (schema or [])
+        )
+        view_sql = view_query or "-- view query unavailable"
+        return (
+            f"-- BigQuery view: {identifier}\n"
+            f"-- Columns: {schema_ddl}\n"
+            f"CREATE OR REPLACE VIEW `{identifier}` AS\n{view_sql}"
+        )
+
+    # bq_table — reconstruct a CREATE TABLE skeleton for the LLM
+    schema = bqc.get_table_schema(project_id, dataset_id, resource_id)
+    if not schema:
+        raise ValueError(f"Empty schema for {identifier}")
+    col_defs = "\n  ".join(f"{c['name']} {c['type']}," for c in schema)
+    return (
+        f"-- BigQuery table: {identifier}\n"
+        f"CREATE TABLE `{identifier}` (\n  {col_defs}\n);"
+    )
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -44,12 +85,15 @@ def extract_lineage(
     if schema_kind is None:
         raise ValueError(f"Cannot extract lineage for kind '{kind}' (no schema registered)")
 
+    identifier = asset.get("identifier", asset_id)
     raw_path = asset.get("raw_path")
-    if not raw_path or not Path(raw_path).exists():
-        raise FileNotFoundError(f"Raw content not found at '{raw_path}' for asset {asset_id}")
 
-    content = Path(raw_path).read_text(encoding="utf-8", errors="replace")
-    identifier = asset.get("identifier", raw_path)
+    if asset.get("source") == "bigquery":
+        content = _get_bq_content(asset)
+    elif raw_path and Path(raw_path).exists():
+        content = Path(raw_path).read_text(encoding="utf-8", errors="replace")
+    else:
+        raise FileNotFoundError(f"Raw content not found at '{raw_path}' for asset {asset_id}")
 
     client = llm_client or LLMClient()
 

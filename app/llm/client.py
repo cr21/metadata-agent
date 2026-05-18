@@ -47,6 +47,7 @@ class LLMClient:
     # ------------------------------------------------------------------
 
     def _call(self, system: str, user: str, schema: dict) -> dict:
+        s = get_settings()
         response = self._client.chat.completions.create(
             model=self._model,
             messages=[
@@ -54,6 +55,7 @@ class LLMClient:
                 {"role": "user", "content": user},
             ],
             response_format={"type": "json_schema", "json_schema": schema},
+            timeout=s.llm_timeout_seconds,
         )
         text = response.choices[0].message.content or "{}"
         return json.loads(text)

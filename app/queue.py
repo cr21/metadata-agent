@@ -216,6 +216,10 @@ def startup(concurrency: int = 4, num_workers: int = 4) -> None:
     """Start the queue and background worker tasks. Call once at app startup."""
     global _queue, _semaphore, _executor, _workers
 
+    # Mark any jobs left in 'running' state from a previous server process as failed.
+    # They are orphaned — the executor that was running them is gone.
+    _recover_orphaned_jobs()
+
     _queue = asyncio.Queue()
     _semaphore = asyncio.Semaphore(concurrency)
     _executor = ThreadPoolExecutor(max_workers=num_workers, thread_name_prefix="lineage-worker")
@@ -223,6 +227,22 @@ def startup(concurrency: int = 4, num_workers: int = 4) -> None:
         asyncio.ensure_future(_worker(i)) for i in range(num_workers)
     ]
     logger.info("Job queue started (concurrency=%d, workers=%d)", concurrency, num_workers)
+
+
+def _recover_orphaned_jobs() -> None:
+    """Mark any 'running' jobs as failed — they were orphaned by a previous server crash/restart."""
+    jobs = local_cache.list_lineage_jobs()
+    orphans = [j for j in jobs if j.get("status") == "running"]
+    if not orphans:
+        return
+    logger.warning("Recovering %d orphaned 'running' jobs from previous process", len(orphans))
+    for job in orphans:
+        local_cache.upsert_lineage_job({
+            **job,
+            "status": "failed",
+            "finished_at": _now(),
+            "error": "Orphaned: server restarted while job was running",
+        })
 
 
 def shutdown() -> None:
