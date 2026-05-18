@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M7** — Async job queue ✅
+> **M8** — Streamlit UI 🟡
 
 ---
 
@@ -179,7 +179,7 @@
 
 ## M8 — Streamlit UI (full)
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"The whole thing is usable end-to-end through a UI — crawl, browse, preview lineage in a table, drill into transitive sources."*
