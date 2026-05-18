@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M8** — Streamlit UI ✅
+> **M9** — End-to-end test + hardening + docs 🟡
 
 ---
 
@@ -203,7 +203,7 @@
 
 ## M9 — End-to-end test + hardening + docs
 
-- **Status**: ⬜ pending
+- **Status**: 🟡 in_progress
 - **Commit SHA**: —
 - **Completed**: —
 - **What this proves (for manager)**: *"The whole pipeline works on a fresh machine following a README — and we have a single test that proves it."*
