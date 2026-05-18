@@ -1,5 +1,7 @@
 .PHONY: api ui dev lint test install
 
+api-noreload:
+	uv run uvicorn app.main:app --port 8000
 api:
 	uv run uvicorn app.main:app --reload --port 8000
 

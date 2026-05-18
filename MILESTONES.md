@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M9** — End-to-end test + hardening + docs 🟡
+> **M9** — End-to-end test + hardening + docs ✅
 
 ---
 
@@ -203,18 +203,18 @@
 
 ## M9 — End-to-end test + hardening + docs
 
-- **Status**: 🟡 in_progress
+- **Status**: ✅ done
 - **Commit SHA**: —
-- **Completed**: —
+- **Completed**: 2026-05-18
 - **What this proves (for manager)**: *"The whole pipeline works on a fresh machine following a README — and we have a single test that proves it."*
 
 **Scope**: integration test crawling fixture repo + mocked BQ project, running full pipeline, asserting on `lineage_edges`. Structured logging. UI error surfaces. `README.md` quickstart.
 
 **Acceptance**:
-- [ ] `pytest tests/integration/test_end_to_end.py` passes
-- [ ] README quickstart works on a fresh machine
-- [ ] Errors in lineage jobs are visible in UI
-- [ ] All milestones above show ✅ done
+- [x] `pytest tests/integration/test_end_to_end.py` passes
+- [x] README quickstart works on a fresh machine
+- [x] Errors in lineage jobs are visible in UI
+- [x] All milestones above show ✅ done
 
 **Preview**: clean pytest run; README walk-through on a clean clone
 
