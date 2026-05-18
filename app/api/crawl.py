@@ -44,8 +44,17 @@ class CrawlResponse(BaseModel):
 async def _enqueue_changed_assets(changed_asset_ids: list[str]) -> int:
     """Enqueue lineage jobs for each changed/new asset. Returns count enqueued."""
     from app import queue as job_queue
+    from app.llm.schemas import KIND_TO_SCHEMA_KIND
+    from app.storage import local_cache
+
     count = 0
     for asset_id in changed_asset_ids:
+        asset = local_cache.get_asset(asset_id)
+        if asset is None:
+            continue
+        if asset.get("kind") not in KIND_TO_SCHEMA_KIND:
+            logger.debug("Skipping asset %s — kind '%s' has no lineage schema", asset_id, asset.get("kind"))
+            continue
         try:
             await job_queue.enqueue_job(asset_id, force=False)
             count += 1
