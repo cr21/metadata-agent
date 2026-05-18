@@ -40,7 +40,7 @@
 ## M2 — Storage layer (BigQuery + SQLite)
 
 - **Status**: ✅ done
-- **Commit SHA**: —
+- **Commit SHA**: $SHA
 - **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"We can remember what we've already seen, so re-crawling doesn't redo work."*
 
@@ -180,7 +180,7 @@
 ## M8 — Streamlit UI (full)
 
 - **Status**: ✅ done
-- **Commit SHA**: —
+- **Commit SHA**: aaa6c5a
 - **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"The whole thing is usable end-to-end through a UI — crawl, browse, preview lineage in a table, drill into transitive sources."*
 
