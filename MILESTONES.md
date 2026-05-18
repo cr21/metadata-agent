@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M8** — Streamlit UI 🟡
+> **M8** — Streamlit UI ✅
 
 ---
 
@@ -179,21 +179,21 @@
 
 ## M8 — Streamlit UI (full)
 
-- **Status**: 🟡 in_progress
+- **Status**: ✅ done
 - **Commit SHA**: —
-- **Completed**: —
+- **Completed**: 2026-05-17
 - **What this proves (for manager)**: *"The whole thing is usable end-to-end through a UI — crawl, browse, preview lineage in a table, drill into transitive sources."*
 
 **Scope**: four pages per spec §7 — Progress (already exists, enhanced), Crawl, Assets, Preview. Polling status; STM/DAG/PySpark variant table layouts; depth-2 panel on Preview.
 
 **Acceptance**:
-- [ ] Crawl page kicks off crawl and shows progress
-- [ ] Assets page filters and sorts
-- [ ] Preview page renders STM variant correctly
-- [ ] Preview page renders DAG spec variant correctly
-- [ ] Preview page renders PySpark STM variant correctly
-- [ ] Preview page shows depth-2 panel where transitive edges exist
-- [ ] `tests/ui_checklist.md` written and passes 5-minute click-through with no Python errors
+- [x] Crawl page kicks off crawl and shows progress
+- [x] Assets page filters and sorts
+- [x] Preview page renders STM variant correctly
+- [x] Preview page renders DAG spec variant correctly
+- [x] Preview page renders PySpark STM variant correctly
+- [x] Preview page shows depth-2 panel where transitive edges exist
+- [x] `tests/ui_checklist.md` written and passes 5-minute click-through with no Python errors
 
 **Preview**: `streamlit run ui/streamlit_app.py`; run through checklist
 
