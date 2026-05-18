@@ -204,7 +204,7 @@
 ## M9 — End-to-end test + hardening + docs
 
 - **Status**: ✅ done
-- **Commit SHA**: —
+- **Commit SHA**: d65c922
 - **Completed**: 2026-05-18
 - **What this proves (for manager)**: *"The whole pipeline works on a fresh machine following a README — and we have a single test that proves it."*
 
