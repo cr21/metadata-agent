@@ -225,7 +225,7 @@
 ## M10 — LLM Observability
 
 - **Status**: ✅ done
-- **Commit SHA**: —
+- **Commit SHA**: a1752a0
 - **Completed**: 2026-05-20
 - **What this proves (for manager)**: *"We can see exactly what we sent to the LLM, what came back, how many tokens were consumed, and how much it cost — per call, per asset, in total."*
 
