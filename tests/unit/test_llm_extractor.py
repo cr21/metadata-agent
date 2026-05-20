@@ -252,15 +252,19 @@ class TestSchemaValidationRetry:
         asset_id = _make_asset("sql_file", str(sql_file), db_path)
 
         call_count = 0
+        _dummy_meta = {"model": "gpt-4o", "prompt_tokens": 10, "completion_tokens": 5,
+                       "total_tokens": 15, "usd_cost": 0.0, "duration_ms": 100, "raw_output": "{}"}
 
         def fake_call(system, user, schema):
             nonlocal call_count
             call_count += 1
-            return bad_payload if call_count == 1 else good_payload
+            payload = bad_payload if call_count == 1 else good_payload
+            return payload, _dummy_meta
 
         with patch.object(LLMClient, "_call", side_effect=fake_call):
             real_client = LLMClient.__new__(LLMClient)
             real_client._model = "gpt-4o"
+            real_client._db_path = db_path
 
             result = extract_lineage(asset_id, llm_client=real_client, db_path=db_path)
 
@@ -276,9 +280,13 @@ class TestSchemaValidationRetry:
         db_path = tmp_path / "index.db"
         asset_id = _make_asset("sql_file", str(sql_file), db_path)
 
-        with patch.object(LLMClient, "_call", return_value=bad_payload):
+        _dummy_meta = {"model": "gpt-4o", "prompt_tokens": 10, "completion_tokens": 5,
+                       "total_tokens": 15, "usd_cost": 0.0, "duration_ms": 100, "raw_output": "{}"}
+
+        with patch.object(LLMClient, "_call", return_value=(bad_payload, _dummy_meta)):
             real_client = LLMClient.__new__(LLMClient)
             real_client._model = "gpt-4o"
+            real_client._db_path = db_path
 
             with pytest.raises(ValueError, match="Schema validation failed after retry"):
                 extract_lineage(asset_id, llm_client=real_client, db_path=db_path)

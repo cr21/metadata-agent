@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import assets, crawl, lineage
+from app.api import assets, crawl, lineage, llm_calls
 from app.config import configure_logging, get_settings
 
 configure_logging()
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(crawl.router)
 app.include_router(assets.router)
 app.include_router(lineage.router)
+app.include_router(llm_calls.router)
 
 
 @app.get("/health")

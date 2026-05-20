@@ -66,6 +66,23 @@ CREATE TABLE IF NOT EXISTS lineage_edges (
     depth               INTEGER NOT NULL DEFAULT 1,
     created_at          TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS llm_calls (
+    call_id           TEXT PRIMARY KEY,
+    asset_id          TEXT,
+    kind              TEXT,
+    model             TEXT NOT NULL,
+    attempt           INTEGER NOT NULL DEFAULT 1,
+    system_prompt     TEXT NOT NULL,
+    user_prompt       TEXT NOT NULL,
+    raw_output        TEXT NOT NULL,
+    prompt_tokens     INTEGER,
+    completion_tokens INTEGER,
+    total_tokens      INTEGER,
+    usd_cost          REAL,
+    duration_ms       INTEGER,
+    created_at        TEXT NOT NULL
+);
 """
 
 
@@ -283,3 +300,62 @@ def list_lineage_edges(
             sql += " WHERE " + " AND ".join(clauses)
         rows = conn.execute(sql, params).fetchall()
         return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# llm_calls
+# ---------------------------------------------------------------------------
+
+def log_llm_call(call: dict, db_path: Path = DB_PATH) -> None:
+    """Persist one LLM call record. Idempotent on call_id."""
+    row = {**call}
+    row.setdefault("created_at", _now())
+    with _connect(db_path) as conn:
+        conn.execute(
+            """INSERT OR IGNORE INTO llm_calls
+               (call_id, asset_id, kind, model, attempt,
+                system_prompt, user_prompt, raw_output,
+                prompt_tokens, completion_tokens, total_tokens,
+                usd_cost, duration_ms, created_at)
+               VALUES
+               (:call_id, :asset_id, :kind, :model, :attempt,
+                :system_prompt, :user_prompt, :raw_output,
+                :prompt_tokens, :completion_tokens, :total_tokens,
+                :usd_cost, :duration_ms, :created_at)""",
+            row,
+        )
+
+
+def list_llm_calls(
+    asset_id: str | None = None,
+    limit: int = 100,
+    db_path: Path = DB_PATH,
+) -> list[dict]:
+    with _connect(db_path) as conn:
+        if asset_id:
+            rows = conn.execute(
+                "SELECT * FROM llm_calls WHERE asset_id = ? ORDER BY created_at DESC LIMIT ?",
+                (asset_id, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM llm_calls ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_llm_call_stats(db_path: Path = DB_PATH) -> dict:
+    """Return aggregate totals across all recorded LLM calls."""
+    with _connect(db_path) as conn:
+        row = conn.execute(
+            """SELECT
+                COUNT(*)            AS total_calls,
+                COALESCE(SUM(total_tokens), 0)      AS total_tokens,
+                COALESCE(SUM(prompt_tokens), 0)     AS total_prompt_tokens,
+                COALESCE(SUM(completion_tokens), 0) AS total_completion_tokens,
+                COALESCE(SUM(usd_cost), 0.0)        AS total_usd,
+                COALESCE(AVG(duration_ms), 0.0)     AS avg_duration_ms
+               FROM llm_calls"""
+        ).fetchone()
+        return dict(row) if row else {}
