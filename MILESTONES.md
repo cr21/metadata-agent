@@ -11,7 +11,7 @@
 
 ## Active milestone
 
-> **M10** — LLM Observability 🟡
+> **M10** — LLM Observability ✅
 
 ---
 
@@ -224,20 +224,20 @@
 
 ## M10 — LLM Observability
 
-- **Status**: 🟡 in_progress
+- **Status**: ✅ done
 - **Commit SHA**: —
-- **Completed**: —
+- **Completed**: 2026-05-20
 - **What this proves (for manager)**: *"We can see exactly what we sent to the LLM, what came back, how many tokens were consumed, and how much it cost — per call, per asset, in total."*
 
 **Scope**: capture every OpenAI call (including retries) into a new `llm_calls` SQLite table. Expose via `GET /api/llm/calls`. Add a "LLM Calls" Streamlit page with aggregate metrics and per-call input/output drill-down.
 
 **Acceptance**:
-- [ ] Every LLM call (attempt 1 and retry) is persisted with system_prompt, user_prompt, raw_output, token counts, USD cost, and duration_ms
-- [ ] `GET /api/llm/calls` returns calls sorted by recency; supports `asset_id` filter
-- [ ] `compute_usd()` correct for gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4, gpt-3.5-turbo; returns 0.0 for unknown models
-- [ ] Streamlit "LLM Calls" page shows 3 summary metrics (total calls, total tokens, total USD)
-- [ ] Streamlit table shows per-call row; expander reveals full prompts + raw output
-- [ ] `make lint` clean, `make test` green
+- [x] Every LLM call (attempt 1 and retry) is persisted with system_prompt, user_prompt, raw_output, token counts, USD cost, and duration_ms
+- [x] `GET /api/llm/calls` returns calls sorted by recency; supports `asset_id` filter
+- [x] `compute_usd()` correct for gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4, gpt-3.5-turbo; returns 0.0 for unknown models
+- [x] Streamlit "LLM Calls" page shows 3 summary metrics (total calls, total tokens, total USD)
+- [x] Streamlit table shows per-call row; expander reveals full prompts + raw output
+- [x] `make lint` clean, `make test` green
 
 **Preview**: `streamlit run ui/streamlit_app.py` → LLM Calls page; run a lineage extraction and watch the row appear
 

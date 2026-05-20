@@ -30,7 +30,7 @@ if "preview_asset_id" not in st.session_state:
 # Sidebar navigation — index driven by session state so code can redirect
 # ---------------------------------------------------------------------------
 
-PAGES = ["Dashboard", "Crawl", "Assets", "Preview"]
+PAGES = ["Dashboard", "Crawl", "Assets", "Preview", "LLM Calls"]
 
 with st.sidebar:
     st.title("🔍 Metadata Generator")
@@ -642,3 +642,80 @@ elif page == "Preview":
                 use_container_width=True,
                 hide_index=True,
             )
+
+# ── LLM Calls ──────────────────────────────────────────────────────────────────
+elif page == "LLM Calls":
+    st.title("🔬 LLM Calls Observability")
+
+    # ── Aggregate stats ──────────────────────────────────────────────────────
+    stats, stats_err = _api("/api/llm/calls/stats")
+    if stats_err:
+        st.error(f"Could not load stats: {stats_err}")
+    else:
+        s1, s2, s3, s4 = st.columns(4)
+        s1.metric("Total Calls", stats.get("total_calls", 0))
+        s2.metric("Total Tokens", f"{stats.get('total_tokens', 0):,}")
+        s3.metric("Total Cost (USD)", f"${stats.get('total_usd', 0.0):.4f}")
+        s4.metric("Avg Latency (ms)", f"{stats.get('avg_duration_ms', 0.0):.0f}")
+
+    st.divider()
+
+    # ── Filters ──────────────────────────────────────────────────────────────
+    f1, f2 = st.columns([3, 1])
+    filter_asset_id = f1.text_input("Filter by Asset ID", placeholder="leave blank for all")
+    filter_limit = f2.number_input("Max rows", min_value=10, max_value=1000, value=100, step=10)
+
+    query = f"/api/llm/calls?limit={filter_limit}"
+    if filter_asset_id.strip():
+        query += f"&asset_id={filter_asset_id.strip()}"
+
+    calls, calls_err = _api(query)
+    if calls_err:
+        st.error(f"Could not load calls: {calls_err}")
+        st.stop()
+
+    if not calls:
+        st.info("No LLM calls recorded yet. Run a lineage extraction to see data here.")
+        st.stop()
+
+    # ── Summary table ────────────────────────────────────────────────────────
+    summary_rows = []
+    for c in calls:
+        summary_rows.append({
+            "Timestamp": (c.get("created_at") or "")[:19].replace("T", " "),
+            "Asset ID": (c.get("asset_id") or "—")[:40],
+            "Kind": c.get("kind") or "—",
+            "Model": c.get("model") or "—",
+            "Attempt": c.get("attempt", 1),
+            "Prompt Tokens": c.get("prompt_tokens"),
+            "Completion Tokens": c.get("completion_tokens"),
+            "Total Tokens": c.get("total_tokens"),
+            "Cost (USD)": f"${c.get('usd_cost', 0.0):.5f}" if c.get("usd_cost") is not None else "—",
+            "Latency (ms)": c.get("duration_ms"),
+        })
+
+    st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+    st.caption(f"{len(calls)} call(s) shown")
+
+    st.divider()
+    st.subheader("Drill-down — Prompts & Output")
+
+    # ── Per-call expanders ───────────────────────────────────────────────────
+    for i, c in enumerate(calls):
+        label = (
+            f"#{i + 1}  {(c.get('created_at') or '')[:19].replace('T', ' ')}  "
+            f"│  {c.get('asset_id') or '—'}  │  attempt {c.get('attempt', 1)}  "
+            f"│  {c.get('total_tokens') or '?'} tokens  │  ${c.get('usd_cost', 0.0):.5f}"
+        )
+        with st.expander(label, expanded=False):
+            t1, t2 = st.tabs(["Input Prompts", "Raw Output"])
+            with t1:
+                st.markdown("**System Prompt**")
+                st.code(c.get("system_prompt", ""), language="text")
+                st.markdown("**User Prompt**")
+                st.code(c.get("user_prompt", ""), language="text")
+            with t2:
+                try:
+                    st.json(json.loads(c.get("raw_output", "{}")))
+                except Exception:
+                    st.code(c.get("raw_output", ""), language="text")

@@ -98,7 +98,7 @@ def extract_lineage(
     client = llm_client or LLMClient()
 
     logger.info("Extracting lineage for asset %s (kind=%s)", asset_id, kind)
-    payload = client.extract(kind=kind, path=identifier, content=content)
+    payload = client.extract(kind=kind, path=identifier, content=content, asset_id=asset_id)
 
     result_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())

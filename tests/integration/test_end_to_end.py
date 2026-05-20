@@ -106,7 +106,7 @@ _DAG_PAYLOAD = {
 class _MockLLMClient:
     """Returns pre-canned valid payloads for any asset kind."""
 
-    def extract(self, kind: str, path: str, content: str) -> dict:  # noqa: ARG002
+    def extract(self, kind: str, path: str, content: str, asset_id: str | None = None) -> dict:  # noqa: ARG002
         if kind in ("airflow_dag",):
             return _DAG_PAYLOAD
         if kind in ("pyspark_file", "pandas_file"):
